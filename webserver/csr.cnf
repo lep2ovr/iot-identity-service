@@ -1,0 +1,23 @@
+[ req ]
+distinguished_name = req_distinguished_name
+prompt             = no
+req_extensions     = v3_req
+
+[ req_distinguished_name ]
+C  = PT
+ST = Porto
+L  = Porto
+O  = Bosch Rexroth
+OU = IoT
+CN = Edge CA
+
+[ v3_req ]
+
+# CA certificate
+basicConstraints = critical, CA:TRUE, pathlen:0
+
+# Certificate signing permissions
+keyUsage = critical, digitalSignature, keyCertSign
+
+# Key identifier
+subjectKeyIdentifier = hash

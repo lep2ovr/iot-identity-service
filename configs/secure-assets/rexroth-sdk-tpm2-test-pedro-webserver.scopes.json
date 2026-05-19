@@ -1,0 +1,6 @@
+{
+    "id": "azure-iot-identity",
+    "required-permissions": [
+        "rexroth-device.all.rwx"
+    ]
+}

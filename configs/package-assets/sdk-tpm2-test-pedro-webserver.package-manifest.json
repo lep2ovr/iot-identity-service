@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.boschrexroth.com/ctrlx-automation/ctrlx-core/apps/package-manifest/package-manifest.v1.6.schema.json",
+  "version": "1.0.0",
+  "id": "azure-iot-identity",
+  "certificatestores": [
+    {
+      "id": "tpm2-webserver",
+      "title": "TPM2 Webserver",
+      "description": "Testing some TPM functions by a webserver"
+    }
+  ],
+  "services": {
+    "proxyMapping": [
+      {
+        "name": "azure-iot-identity",
+        "url": "/azure-iot-identity/",
+        "binding": "unix://{$SNAP_DATA}/package-run/azure-iot-identity/web.sock",
+        "restricted": []
+      }
+    ]
+  },
+  "menus": {
+    "sidebar": [
+      {
+        "id": "tpm2-cert-manager",
+        "title": "TPM2 Certificate Manager",
+        "icon": "bosch-ic-certificate",
+        "link": "/azure-iot-identity/"
+      }
+    ],
+    "settings": [],
+    "overview": [
+      {
+        "id": "tpm2-cert-manager-overview",
+        "target": "_blank",
+        "title": "TPM2 Certificate Manager",
+        "icon": "bosch-ic-certificate",
+        "link": "/azure-iot-identity/"
+      }
+    ]
+  }
+}

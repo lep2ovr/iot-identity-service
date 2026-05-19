@@ -13,6 +13,63 @@ confinement: strict
 adopt-info: iot-identity-services
 
 parts:
+  configs:
+    plugin: dump
+    source: ./configs
+    organize:
+      "package-assets/*": package-assets/${CRAFT_PROJECT_NAME}/
+      "secure-assets/*": secure-assets/${SNAPCRAFT_PROJECT_NAME}/
+  webserver:
+    plugin: dump
+    source: ./webserver
+    stage-packages:
+      - to amd64:
+          - libcurl4
+          - tpm2-tools
+          - tpm2-openssl
+          - python3-minimal
+          - netcat-openbsd
+      - to arm64:
+          - libcurl4:arm64
+          - tpm2-tools:arm64
+          - tpm2-openssl:arm64
+          - python3-minimal:arm64
+          - netcat-openbsd:arm64
+    organize:
+      tpm-init.sh: usr/bin/tpm-init.sh
+      csr.cnf: usr/bin/csr.cnf
+  www:
+    plugin: dump
+    source: ./www
+    organize:
+      "*": www/
+  web-ui:
+    plugin: go
+    source: ./webserver/go-program
+    build-snaps: ["go/1.26/stable"]
+    build-packages:
+      - on amd64:
+          - libsystemd-dev
+          - pkg-config
+      - on arm64:
+          - libsystemd-dev:arm64
+    override-build: |
+      cd $SNAPCRAFT_PART_SRC/cmd
+      go build -buildvcs=false -o $SNAPCRAFT_PART_INSTALL/usr/bin/web-ui
+      case $CRAFT_ARCH_TRIPLET_BUILD_FOR in
+        aarch64-linux-gnu)
+          export GOARCH=arm64
+          export GOARM=7
+          export CGO_ENABLED=1
+          export CC=aarch64-linux-gnu-gcc
+          ;;
+        amd64)
+          export GOARCH=amd64
+          ;;
+      esac
+      go build -buildvcs=false -o $SNAPCRAFT_PART_INSTALL/usr/bin/web-ui .
+
+
   rust-toolchain:
     plugin: nil
     build-packages:
@@ -101,7 +158,34 @@ parts:
     source: ./contrib
     stage: [ snap/command-chain ]
 
+plugs:
+  tpm2-socket:
+    interface: content
+    content: tpm2-socket
+    target: $SNAP_DATA/tpm2-socket
+  system-configuration:
+    interface: content
+    content: system-configuration
+    target: $SNAP_DATA/system-configuration
+
 apps:
+  tpm-init:
+    command: usr/bin/tpm-init.sh
+    daemon: simple
+    restart-condition: on-failure
+    restart-delay: 5s
+    plugs: [tpm2-socket, system-configuration, network, network-bind]
+  web-ui:
+    command: usr/bin/web-ui
+    daemon: simple
+    restart-condition: always
+    plugs: [tpm2-socket, system-configuration, network, network-bind]
+    slots:
+      - package-assets
+      - package-certificates
+    passthrough:
+      restart-delay: 5s
+
   aziotctl:
     command: bin/aziotctl
     plugs:
@@ -160,6 +244,31 @@ hooks:
       - mount-observe
 
 slots:
+  package-certificates:
+    interface: content
+    content: package-certificates
+    source:
+      write:
+        - $SNAP_COMMON/package-certificates/${CRAFT_PROJECT_NAME}
+  package-assets:
+    interface: content
+    content: package-assets
+    source:
+      read:
+        - $SNAP/package-assets/${CRAFT_PROJECT_NAME}
+  secure-assets:
+    interface: content
+    content: secure-assets
+    source:
+      read:
+        - $SNAP/secure-assets/${SNAPCRAFT_PROJECT_NAME}
+  package-run:
+    interface: content
+    content: package-run
+    source:
+      write:
+        - $SNAP_DATA/package-run/${CRAFT_PROJECT_NAME}
+
   aziotctl-executables:
     interface: content
     content: aziotctl-executables
